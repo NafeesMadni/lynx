@@ -4,6 +4,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "LynxBooleanOption.h"
 #import "LynxTemplateRender+Protected.h"
 
 #include <objc/objc.h>
@@ -52,6 +53,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setPageConfig:(const std::shared_ptr<lynx::tasm::PageConfig> &)pageConfig
               context:(LynxContext *)context;
+
+- (void)setFluencyTracerEnabled:(LynxBooleanOption)enabledBySampling;
 
 - (BOOL)needPaintingContextProxy;
 

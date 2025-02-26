@@ -9,7 +9,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface LynxScrollFluency : NSObject <LynxScrollListener>
 
-- (void)setFluencyPageconfigProbability:(CGFloat)probability;
+- (void)setEnabledBySampling:(LynxBooleanOption)enabledBySampling;
+
+- (void)setPageConfigProbability:(CGFloat)probability;
 
 - (BOOL)shouldSendAllScrollEvent;
 

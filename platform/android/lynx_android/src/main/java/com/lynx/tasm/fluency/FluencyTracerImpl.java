@@ -4,6 +4,7 @@
 
 package com.lynx.tasm.fluency;
 
+import com.lynx.tasm.LynxBooleanOption;
 import com.lynx.tasm.behavior.LynxContext;
 import com.lynx.tasm.eventreport.LynxEventReporter;
 import java.lang.ref.WeakReference;
@@ -20,9 +21,43 @@ class FluencyTracerImpl {
   }
 
   public static class FluencyTracerConfig {
-    public String scene = "";
-    public String tag = "";
-    public double pageConfigProbability = FluencyTraceHelper.UNKNOWN_FLUENCY_PAGECONFIG_PROBABILITY;
+    private String scene = "";
+    private String tag = "";
+    private double pageConfigProbability =
+        FluencyTraceHelper.UNKNOWN_FLUENCY_PAGECONFIG_PROBABILITY;
+    private LynxBooleanOption enabledBySampling = LynxBooleanOption.UNSET;
+
+    public String getScene() {
+      return scene;
+    }
+
+    public void setScene(String scene) {
+      this.scene = scene;
+    }
+
+    public String getTag() {
+      return tag;
+    }
+
+    public void setTag(String tag) {
+      this.tag = tag;
+    }
+
+    public double getPageConfigProbability() {
+      return pageConfigProbability;
+    }
+
+    public void setPageConfigProbability(double pageConfigProbability) {
+      this.pageConfigProbability = pageConfigProbability;
+    }
+
+    public LynxBooleanOption getEnabledBySampling() {
+      return enabledBySampling;
+    }
+
+    public void setEnabledBySampling(LynxBooleanOption enabledBySampling) {
+      this.enabledBySampling = enabledBySampling;
+    }
   }
 
   public void start(int sign, FluencyTracerConfig config) {
@@ -65,8 +100,8 @@ class FluencyTracerImpl {
     public void report(LynxFpsTracer.LynxFpsRawMetrics rawMetrics) {
       LynxEventReporter.PropsBuilder builder = () -> {
         Map<String, Object> props = new HashMap<>();
-        props.put("lynxsdk_fluency_scene", mConfig.scene);
-        props.put("lynxsdk_fluency_tag", mConfig.tag);
+        props.put("lynxsdk_fluency_scene", mConfig.getScene());
+        props.put("lynxsdk_fluency_tag", mConfig.getTag());
         props.put("lynxsdk_fluency_maximum_frames", rawMetrics.maximumFrames);
 
         // basic fluency info
@@ -103,8 +138,8 @@ class FluencyTracerImpl {
             1000.0 * rawMetrics.drop25Duration / rawMetrics.duration);
 
         // front throttle: enableLynxScrollFluency
-        props.put("lynxsdk_fluency_pageconfig_probability", mConfig.pageConfigProbability);
-
+        props.put("lynxsdk_fluency_pageconfig_probability", mConfig.getPageConfigProbability());
+        props.put("lynxsdk_fluency_enabled_by_sampling", mConfig.getEnabledBySampling().ordinal());
         return props;
       };
 

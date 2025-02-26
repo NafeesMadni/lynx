@@ -5,6 +5,7 @@
 #import <Foundation/Foundation.h>
 
 #import <Lynx/JSModule.h>
+#import <Lynx/LynxBooleanOption.h>
 #import <Lynx/LynxLoadMeta.h>
 #import <Lynx/LynxTheme.h>
 #import <Lynx/LynxViewEnum.h>
@@ -212,6 +213,8 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Perf
 
 - (void)setExtraTiming:(LynxExtraTiming* _Nonnull)timing;
+
+- (void)setFluencyTracerEnabled:(LynxBooleanOption)enabled;
 
 /// Add extra parameters for reporting events, overriding old values if the parameters already
 /// exist.

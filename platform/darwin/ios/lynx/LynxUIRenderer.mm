@@ -165,7 +165,7 @@
   // If EnableLynxFluency is configured, Lynx will determine whether to enable fluency
   // metics based on this probability when creating a LynxView.
   [[uiContext fluencyInnerListener]
-      setFluencyPageconfigProbability:pageConfig->GetEnableScrollFluencyMonitor()];
+      setPageConfigProbability:pageConfig->GetEnableScrollFluencyMonitor()];
   if (pageConfig->GetEnableTextLayerRender() == lynx::tasm::TernaryBool::UNDEFINE_VALUE) {
     auto new_value = [[LynxEnv sharedInstance] boolFromExternalEnv:LynxEnvEnableTextLayerRender
                                                       defaultValue:NO];
@@ -182,6 +182,10 @@
   [uiContext
       setTrailUseNewImage:pageConfig->GetTrailNewImage() == lynx::tasm::TernaryBool::TRUE_VALUE];
   [uiContext setLogBoxImageSizeWarningThreshold:pageConfig->GetLogBoxImageSizeWarningThreshold()];
+}
+
+- (void)setFluencyTracerEnabled:(LynxBooleanOption)enabledBySampling {
+  [_uiOwner.uiContext.fluencyInnerListener setEnabledBySampling:enabledBySampling];
 }
 
 - (BOOL)needPaintingContextProxy {

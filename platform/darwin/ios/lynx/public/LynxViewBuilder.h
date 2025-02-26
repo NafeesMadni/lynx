@@ -5,6 +5,7 @@
 #import <Foundation/Foundation.h>
 
 #import <Lynx/LynxBackgroundRuntime.h>
+#import <Lynx/LynxBooleanOption.h>
 #import <Lynx/LynxConfig.h>
 #import <Lynx/LynxDynamicComponentFetcher.h>
 #import <Lynx/LynxGenericResourceFetcher.h>
@@ -12,12 +13,6 @@
 #import <Lynx/LynxMediaResourceFetcher.h>
 #import <Lynx/LynxTemplateResourceFetcher.h>
 #import <Lynx/LynxViewEnum.h>
-
-typedef NS_ENUM(NSInteger, LynxBooleanOption) {
-  LynxBooleanOptionUnset = 0,
-  LynxBooleanOptionTrue = 1,
-  LynxBooleanOptionFalse = 2,
-};
 
 @interface LynxViewBuilder : NSObject
 
