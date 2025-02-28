@@ -105,8 +105,11 @@ LynxShell::LynxShell(base::ThreadStrategyForRendering strategy,
       enable_async_hydration_(DoAsyncHydration(strategy, shell_option)),
       current_strategy_(strategy),
       js_group_thread_name_(shell_option.js_group_thread_name_),
-      enable_js_group_thread_(shell_option.enable_js_group_thread_) {
+      enable_js_group_thread_(shell_option.enable_js_group_thread_),
+      long_task_monitor_enabled_(shell_option.long_task_monitor_enabled_) {
   LOGI("LynxShell create, this:" << this);
+  ui_operation_queue_->SetLongTaskMonitorEnabled(
+      shell_option.long_task_monitor_enabled_);
   engine_thread_switch_ = std::make_shared<EngineThreadSwitch>(
       runners_.GetUITaskRunner(), runners_.GetTASMTaskRunner(),
       ui_operation_queue_);
@@ -192,7 +195,8 @@ void LynxShell::InitRuntime(
         on_runtime_actor_created,
     std::vector<std::string> preload_js_paths, bool force_reload_js_core,
     bool force_use_light_weight_js_engine, bool pending_js_task,
-    bool enable_user_code_cache, const std::string& code_cache_source_url) {
+    bool enable_user_code_cache, const std::string& code_cache_source_url,
+    std::optional<bool> enable_long_task_monitor) {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, "LynxShell::InitRuntime");
 #if ENABLE_TESTBENCH_RECORDER
   int64_t record_id = reinterpret_cast<int64_t>(this);
@@ -223,7 +227,8 @@ void LynxShell::InitRuntime(
   tasm_mediator_->SetPropBundleCreator(prop_bundle_creator_);
   auto runtime = std::make_unique<runtime::LynxRuntime>(
       group_id, instance_id_, std::move(delegate), enable_user_code_cache,
-      code_cache_source_url, enable_js_group_thread_);
+      code_cache_source_url, enable_js_group_thread_,
+      long_task_monitor_enabled_);
   runtime_actor_ = std::make_shared<LynxActor<runtime::LynxRuntime>>(
       std::move(runtime), js_task_runner, instance_id_, enable_runtime_);
   delegate_raw_ptr->set_vsync_monitor(vsync_monitor, runtime_actor_);
@@ -1080,6 +1085,22 @@ void LynxShell::SetEnableBytecode(bool enable,
                                         bytecode_source_url)](auto& runtime) {
     runtime->SetEnableBytecode(enable, bytecode_source_url);
   });
+}
+
+void LynxShell::SetLongTaskMonitorEnabled(std::optional<bool> sampled_enabled) {
+  engine_actor_->Act(
+      [sampled_enabled = std::move(sampled_enabled)](auto& engine) {
+        engine->GetTasm()->SetLongTaskMonitorEnabled(sampled_enabled);
+      });
+  runtime_actor_->Act(
+      [sampled_enabled = std::move(sampled_enabled)](auto& runtime) {
+        runtime->SetLongTaskMonitorEnabled(sampled_enabled);
+      });
+  layout_actor_->Act(
+      [sampled_enabled = std::move(sampled_enabled)](auto& layout) {
+        layout->SetLongTaskMonitorEnabled(sampled_enabled);
+      });
+  ui_operation_queue_->SetLongTaskMonitorEnabled(sampled_enabled);
 }
 
 void LynxShell::SetAnimationsPending(bool need_pending_ui_op) {

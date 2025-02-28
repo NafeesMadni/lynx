@@ -107,6 +107,7 @@ common_lynx_public_headers =
                     "base/LynxConverter+LynxCSSType.h",
                     "base/LynxForegroundProtocol.h",
                     "base/LynxClassAliasDefines.h",
+                    "base/LynxBooleanOption.h",
                     "base/LynxExternalResourceFetcherWrapper.h",
                     "base/LynxPageReloadHelperProto.h",
                     "base/LynxPageReloadHelper.h",

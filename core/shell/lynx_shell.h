@@ -8,6 +8,7 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -66,6 +67,7 @@ struct ShellOption {
   bool enable_async_hydration_{false};
   int32_t instance_id_{kUnknownInstanceId};
   std::string js_group_thread_name_;
+  std::optional<bool> long_task_monitor_enabled_;
 };
 
 // support create and destroy in any thread
@@ -87,7 +89,8 @@ class LynxShell {
       std::vector<std::string> preload_js_paths, bool force_reload_js_core,
       bool force_use_light_weight_js_engine = false,
       bool pending_js_task = false, bool enable_user_bytecode = false,
-      const std::string& bytecode_source_url = "");
+      const std::string& bytecode_source_url = "",
+      std::optional<bool> enable_long_task_monitor = std::nullopt);
 
   // This method attaches a pre-created LynxRuntime to the LynxShell:
   // so only one of `AttachRuntime` and `InitRuntime` will be called
@@ -300,6 +303,9 @@ class LynxShell {
   void SetEnableBytecode(bool enable, std::string bytecode_source_url);
 
   void SetAnimationsPending(bool need_pending_ui_op);
+
+  void SetLongTaskMonitorEnabled(std::optional<bool> sampled_enabled);
+
   /**
    * Dispatch MessageEvent from platform, currently only dispatching
    * MessageEvent from DevTool.
@@ -408,6 +414,7 @@ class LynxShell {
 
   std::string js_group_thread_name_;
   bool enable_js_group_thread_;
+  std::optional<bool> long_task_monitor_enabled_{std::nullopt};
   std::condition_variable tasm_merge_cv_;
   std::mutex tasm_merge_mutex_;
   std::atomic_bool need_wait_for_merge_{false};

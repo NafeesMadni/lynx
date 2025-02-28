@@ -44,7 +44,8 @@ class LynxRuntime final {
   LynxRuntime(const std::string& group_id, int32_t instance_id,
               std::unique_ptr<TemplateDelegate> delegate,
               bool enable_user_bytecode, const std::string& bytecode_source_url,
-              bool enable_js_group_thread);
+              bool enable_js_group_thread,
+              std::optional<bool> long_task_monitor_enabled);
   ~LynxRuntime();
   LynxRuntime(const LynxRuntime&) = delete;
   LynxRuntime& operator=(const LynxRuntime&) = delete;
@@ -138,6 +139,11 @@ class LynxRuntime final {
 
   void SetEnableBytecode(bool enable, const std::string& bytecode_source_url);
 
+  void SetLongTaskMonitorEnabled(std::optional<bool> sampled_enabled);
+  std::optional<bool> GetLongTaskMonitorEnabled() {
+    return long_task_monitor_enabled_;
+  }
+
   void OnReceiveMessageEvent(runtime::MessageEvent event);
 
   void OnSetPresetData(lepus::Value data);
@@ -224,6 +230,7 @@ class LynxRuntime final {
   bool enable_user_bytecode_ = false;
   std::string bytecode_source_url_;
   bool enable_js_group_thread_{false};
+  std::optional<bool> long_task_monitor_enabled_;
   std::shared_ptr<IRuntimeLifecycleObserver> runtime_lifecycle_observer_{
       nullptr};
   lepus::Value init_global_props_;

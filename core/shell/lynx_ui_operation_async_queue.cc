@@ -122,7 +122,8 @@ void LynxUIOperationAsyncQueue::FlushInterval() {
   TRACE_EVENT(LYNX_TRACE_CATEGORY,
               tasm::timing::kTaskNameLynxUIOperationAsyncQueueFlush);
   tasm::timing::LongTaskMonitor::Scope longTaskScope(
-      instance_id_, tasm::timing::kUIOperationFlushTask,
+      instance_id_, long_task_monitor_enabled_,
+      tasm::timing::kUIOperationFlushTask,
       tasm::timing::kTaskNameLynxUIOperationAsyncQueueFlush);
   is_in_flush_ = true;
 

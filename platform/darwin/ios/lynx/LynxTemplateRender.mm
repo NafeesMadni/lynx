@@ -2028,6 +2028,16 @@ LYNX_NOT_IMPLEMENTED(-(instancetype)initWithCoder : (NSCoder*)aDecoder)
   }
 }
 
+- (void)setLongTaskMonitorEnabled:(LynxBooleanOption)enabled {
+  std::optional<bool> opt = std::nullopt;
+  if (enabled == LynxBooleanOptionTrue) {
+    opt = true;
+  } else if (enabled == LynxBooleanOptionFalse) {
+    opt = false;
+  }
+  shell_->SetLongTaskMonitorEnabled(opt);
+}
+
 - (void)putExtraParamsForReportingEvents:(NSDictionary<NSString*, id>*)params {
   [LynxEventReporter putExtraParams:params forInstanceId:self.instanceId];
 }

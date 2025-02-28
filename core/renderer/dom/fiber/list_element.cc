@@ -147,8 +147,10 @@ int32_t ListElement::ComponentAtIndex(uint32_t index, int64_t operationId,
               });
   int32_t instance_id = tasm_ == nullptr ? tasm::report::kUnknownInstanceId
                                          : tasm_->GetInstanceId();
+  auto enabled_for_instance =
+      tasm_ != nullptr ? tasm_->GetLongTaskMonitorEnabled() : std::nullopt;
   tasm::timing::LongTaskMonitor::Scope longTaskScope(
-      instance_id, tasm::timing::kListNodeTask,
+      instance_id, enabled_for_instance, tasm::timing::kListNodeTask,
       tasm::timing::kTaskNameListElementComponentAtIndex);
   if (ssr_helper_) {
     // ComponentAtIndex is an interface for the list to create list items.

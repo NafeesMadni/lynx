@@ -88,13 +88,15 @@ LynxRuntime::LynxRuntime(const std::string& group_id, int32_t instance_id,
                          std::unique_ptr<TemplateDelegate> delegate,
                          bool enable_user_bytecode,
                          const std::string& bytecode_source_url,
-                         bool enable_js_group_thread)
+                         bool enable_js_group_thread,
+                         std::optional<bool> long_task_monitor_enabled)
     : group_id_(group_id),
       instance_id_(instance_id),
       delegate_(std::move(delegate)),
       enable_user_bytecode_(enable_user_bytecode),
       bytecode_source_url_(bytecode_source_url),
-      enable_js_group_thread_(enable_js_group_thread) {
+      enable_js_group_thread_(enable_js_group_thread),
+      long_task_monitor_enabled_(long_task_monitor_enabled) {
   cached_tasks_.reserve(8);
 }
 
@@ -147,7 +149,8 @@ void LynxRuntime::Init(
 
   TRACE_EVENT(LYNX_TRACE_CATEGORY_VITALS, "LynxCreateAndLoadApp");
   app_ = js_executor_->createNativeAppInstance(
-      GetRuntimeId(), delegate_.get(), std::make_unique<LynxApiHandler>(this));
+      GetRuntimeId(), delegate_.get(), std::make_unique<LynxApiHandler>(this),
+      long_task_monitor_enabled_);
   LOGI(" lynxRuntime:" << this << " create APP " << app_.get());
   AddEventListeners();
   UpdateState(State::kJsCoreLoaded);
@@ -780,6 +783,15 @@ void LynxRuntime::SetEnableBytecode(bool enable,
   if (auto rt = GetJSRuntime()) {
     rt->SetEnableUserBytecode(enable);
     rt->SetBytecodeSourceUrl(bytecode_source_url);
+  }
+}
+
+void LynxRuntime::SetLongTaskMonitorEnabled(
+    std::optional<bool> sampled_enabled) {
+  long_task_monitor_enabled_ = sampled_enabled;
+  auto app = app_;
+  if (app) {
+    app->SetLongTaskMonitorEnabled(sampled_enabled);
   }
 }
 

@@ -108,19 +108,31 @@ class LongTaskMonitor {
  public:
   class Scope {
    public:
-    explicit Scope(int32_t instance_id, const std::string& type = "",
-                   const std::string& name = "",
+    explicit Scope(int32_t instance_id,
+                   std::optional<bool> enabled_for_instance = std::nullopt,
+                   const std::string& type = "", const std::string& name = "",
                    const std::string& task_info = "") {
-      LongTaskMonitor::Instance()->WillProcessTask(type, name, task_info,
-                                                   instance_id);
+      if (LongTaskMonitor::IsEnabledForInstance(instance_id,
+                                                enabled_for_instance)) {
+        current_scope_enabled_ = true;
+        LongTaskMonitor::Instance()->WillProcessTask(type, name, task_info,
+                                                     instance_id);
+      }
     }
 
-    ~Scope() { LongTaskMonitor::Instance()->DidProcessTask(); }
+    ~Scope() {
+      if (current_scope_enabled_) {
+        LongTaskMonitor::Instance()->DidProcessTask();
+      }
+    }
 
     Scope(const Scope& s) = delete;
     Scope& operator=(const Scope&) = delete;
     Scope(Scope&&) = delete;
     Scope& operator=(Scope&&) = delete;
+
+   private:
+    bool current_scope_enabled_ = false;
   };
 
   /**
@@ -168,14 +180,30 @@ class LongTaskMonitor {
   static LongTaskMonitor* Instance();
 
  private:
+  friend class Scope;
+
   LongTaskMonitor();
   LongTaskMonitor(const LongTaskMonitor& timing) = delete;
   LongTaskMonitor& operator=(const LongTaskMonitor&) = delete;
   LongTaskMonitor(LongTaskMonitor&&) = delete;
   LongTaskMonitor& operator=(LongTaskMonitor&&) = delete;
 
+  static inline bool g_enabled = false;
+  inline IsEnabledForInstance(int32_t instance_id,
+                              std::optional<bool> enabled_for_instance) {
+    if (!g_enabled || instance_id < 0) {
+      return false;
+    }
+
+    // If the task is not enabled by sampling for the shell instance, skip the
+    // task monitoring.
+    if (enabled_for_instance.has_value() && !enabled_for_instance.value()) {
+      return false;
+    }
+    return true;
+  }
+
   base::InlineStack<LongTaskTiming, 16> timing_stack_;
-  bool enable_;
   // TODO(limeng.amer): get value from LynxEnv;
   double duration_threshold_ms_;
   std::string thread_name_;

@@ -79,10 +79,12 @@ void LynxEngine::LoadTemplate(
     bool enable_recycle_template_bundle) {
   TRACE_EVENT(LYNX_TRACE_CATEGORY,
               tasm::timing::kTaskNameLynxEngineLoadTemplate, "url", url);
+  auto long_task_enabled =
+      tasm_ != nullptr ? tasm_->GetLongTaskMonitorEnabled() : std::nullopt;
   tasm::TimingCollector::Scope<Delegate> scope(delegate_.get(),
                                                pipeline_options);
   tasm::timing::LongTaskMonitor::Scope longTaskScope(
-      instance_id_, tasm::timing::kLoadTemplateTask,
+      instance_id_, long_task_enabled, tasm::timing::kLoadTemplateTask,
       tasm::timing::kTaskNameLynxEngineLoadTemplate);
   tasm_->LoadTemplate(url, std::move(source), template_data, pipeline_options,
                       enable_pre_painting, enable_recycle_template_bundle);
@@ -235,9 +237,10 @@ void LynxEngine::UpdateViewport(float width, int32_t width_mode, float height,
 }
 
 void LynxEngine::SyncFetchLayoutResult() {
+  auto& element_manager = tasm_->page_proxy()->element_manager();
   LayoutMediator::HandleLayoutVoluntarily(
-      operation_queue_.get(),
-      tasm_->page_proxy()->element_manager()->catalyzer());
+      operation_queue_.get(), element_manager->catalyzer(),
+      element_manager->GetLongTaskMonitorEnabled());
 }
 
 void LynxEngine::SendAirPageEvent(const std::string& name,

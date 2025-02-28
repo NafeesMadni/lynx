@@ -190,7 +190,7 @@ jlong Create(JNIEnv* env, jclass jcaller, jlong timing_collector_android,
              jboolean enable_async_hydration, jboolean enable_js_group_thread,
              jstring js_group_thread_name, jobject tasm_platform_invoker,
              jlong white_board_ptr, jlong ui_delegate_ptr,
-             jboolean use_invoke_ui_method) {
+             jboolean use_invoke_ui_method, jint long_task_monitor_enabled) {
   auto* ui_delegate =
       reinterpret_cast<lynx::tasm::UIDelegate*>(ui_delegate_ptr);
 
@@ -221,6 +221,16 @@ jlong Create(JNIEnv* env, jclass jcaller, jlong timing_collector_android,
       runtime_wrapper == nullptr
           ? -1  // {kUnknownInstanceId};
           : runtime_wrapper->GetRuntimeActor()->GetInstanceId();
+
+  // See LynxBooleanOption.java for enum ordinals
+  std::optional<bool> enabled_opt = std::nullopt;
+  if (long_task_monitor_enabled == 1) {
+    enabled_opt = true;
+  } else if (long_task_monitor_enabled == 2) {
+    enabled_opt = false;
+  }
+  shell_option.long_task_monitor_enabled_ = enabled_opt;
+
   std::shared_ptr<lynx::tasm::WhiteBoard> white_board = nullptr;
   if (white_board_ptr != 0) {
     white_board = *reinterpret_cast<std::shared_ptr<lynx::tasm::WhiteBoard>*>(
@@ -1230,6 +1240,26 @@ void ClearAllTimingInfo(JNIEnv* env, jobject jcaller, jlong ptr,
   }
   auto* shell = reinterpret_cast<LynxShell*>(ptr);
   shell->ClearAllTimingInfo();
+  AtomicLifecycle::TryFree(lifecycle_ptr);
+}
+
+void SetLongTaskMonitorEnabled(JNIEnv* env, jobject jcaller, jlong ptr,
+                               jlong lifecycle, jlong enabled) {
+  AtomicLifecycle* lifecycle_ptr =
+      reinterpret_cast<AtomicLifecycle*>(lifecycle);
+  if (!AtomicLifecycle::TryLock(lifecycle_ptr)) {
+    return;
+  }
+  auto* shell = reinterpret_cast<LynxShell*>(ptr);
+
+  // See LynxBooleanOption.java for the ordinal values
+  std::optional<bool> opt = std::nullopt;
+  if (enabled == 1) {
+    opt = true;
+  } else if (enabled == 2) {
+    opt = false;
+  }
+  shell->SetLongTaskMonitorEnabled(opt);
   AtomicLifecycle::TryFree(lifecycle_ptr);
 }
 

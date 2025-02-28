@@ -42,7 +42,8 @@ namespace tasm {
 LayoutContext::LayoutContext(
     std::unique_ptr<Delegate> delegate,
     std::unique_ptr<LayoutCtxPlatformImpl> platform_impl,
-    const LynxEnvConfig& lynx_env_config, int32_t instance_id)
+    const LynxEnvConfig& lynx_env_config, int32_t instance_id,
+    std::optional<bool> long_task_monitor_enabled)
     : platform_impl_(std::move(platform_impl)),
       delegate_(std::move(delegate)),
       root_(nullptr),
@@ -55,7 +56,8 @@ LayoutContext::LayoutContext(
           lynx_env_config.LayoutsUnitPerPx(),
           lynx_env_config.PhysicalPixelsPerLayoutUnit())),
       lynx_env_config_(lynx_env_config),
-      instance_id_(instance_id) {
+      instance_id_(instance_id),
+      long_task_monitor_enabled_(long_task_monitor_enabled) {
   // TODO(chennengshi), add test for lynx_shell_builder_unittest, then the
   // condition can be deleted.
   if (platform_impl_) {
@@ -641,7 +643,7 @@ LayoutNode* LayoutContext::FindNodeById(int32_t id) {
 void LayoutContext::DispatchLayoutUpdates(const PipelineOptions& options) {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, "LayoutContext::DispatchLayoutUpdates");
   tasm::timing::LongTaskMonitor::Scope longTaskScope(
-      instance_id_, tasm::timing::kNativeFuncTask,
+      instance_id_, long_task_monitor_enabled_, tasm::timing::kNativeFuncTask,
       "LayoutContext::DispatchLayoutUpdates");
   tasm::TimingCollector::Scope<Delegate> scope(delegate_.get(), options);
   enable_layout_ = true;

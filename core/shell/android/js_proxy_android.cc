@@ -152,8 +152,9 @@ void JSProxyAndroid::CallJSFunction(std::string module_id,
         return;
       }
       piper::Scope scope(*js_runtime);
+      auto long_task_monitor_enabled = runtime->GetLongTaskMonitorEnabled();
       tasm::timing::LongTaskMonitor::Scope long_task_scope(
-          instance_id, tasm::timing::kJSFuncTask,
+          instance_id, long_task_monitor_enabled, tasm::timing::kJSFuncTask,
           tasm::timing::kTaskNameJSProxyCallJSFunction);
       tasm::timing::LongTaskTiming* timing =
           tasm::timing::LongTaskMonitor::Instance()->GetTopTimingPtr();

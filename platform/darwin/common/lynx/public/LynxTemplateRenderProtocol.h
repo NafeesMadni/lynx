@@ -5,6 +5,7 @@
 #import <Foundation/Foundation.h>
 
 #import <Lynx/JSModule.h>
+#import <Lynx/LynxBooleanOption.h>
 #import <Lynx/LynxLoadMeta.h>
 #import <Lynx/LynxTheme.h>
 #import <Lynx/LynxViewEnum.h>
@@ -210,6 +211,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)onErrorOccurred:(NSInteger)errCode sourceError:(NSError* _Nonnull)source;
 
 #pragma mark - Perf
+
+- (void)setLongTaskMonitorEnabled:(LynxBooleanOption)enabled;
 
 - (void)setExtraTiming:(LynxExtraTiming* _Nonnull)timing;
 

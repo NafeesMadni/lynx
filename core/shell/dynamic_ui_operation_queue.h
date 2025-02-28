@@ -34,6 +34,7 @@ class DynamicUIOperationQueue {
   void Flush();
   void SetEnableFlush(bool enable_flush);
   void SetErrorCallback(ErrorCallback callback);
+  void SetLongTaskMonitorEnabled(std::optional<bool> enabled);
   uint32_t GetNativeUpdateDataOrder();
   uint32_t UpdateNativeUpdateDataOrder();
 

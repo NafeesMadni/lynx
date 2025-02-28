@@ -22,7 +22,8 @@ namespace piper {
 class JsTaskAdapter : public std::enable_shared_from_this<JsTaskAdapter> {
  public:
   explicit JsTaskAdapter(const std::weak_ptr<Runtime>& rt,
-                         const std::string& group_id);
+                         const std::string& group_id,
+                         std::optional<bool> long_task_monitor_enabled);
   ~JsTaskAdapter();
 
   JsTaskAdapter(const JsTaskAdapter&) = delete;
@@ -37,6 +38,10 @@ class JsTaskAdapter : public std::enable_shared_from_this<JsTaskAdapter> {
   void RemoveTask(uint32_t task);
 
   void QueueMicrotask(Function func);
+
+  void SetLongTaskMonitorEnabled(std::optional<bool> enabled) {
+    long_task_monitor_enabled_ = enabled;
+  }
 
  private:
   enum class TaskType {
@@ -54,6 +59,8 @@ class JsTaskAdapter : public std::enable_shared_from_this<JsTaskAdapter> {
   std::weak_ptr<Runtime> rt_;
 
   std::string group_id_;
+
+  std::optional<bool> long_task_monitor_enabled_;
 };
 
 }  // namespace piper

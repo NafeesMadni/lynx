@@ -183,7 +183,7 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
   // for fontscale
   private float mFontScale = 1.0f;
   private boolean mAutoConcurrency;
-
+  private LynxBooleanOption mLongTaskMonitorEnabled;
   private boolean mEnableUIFlush = true;
 
   private List<Map<String, Object>> componentsData;
@@ -507,6 +507,13 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
     onTraceEventEnd(eventName);
   }
 
+  public void setLongTaskMonitorEnabled(LynxBooleanOption enabledBySampling) {
+    mLongTaskMonitorEnabled = enabledBySampling;
+    if (mNativePtr != 0) {
+      nativeSetLongTaskMonitorEnabled(mNativePtr, mNativeLifecycle, enabledBySampling.ordinal());
+    }
+  }
+
   public void putExtraParamsForReportingEvents(final Map<String, Object> params) {
     String eventName = "LynxTemplateRender.putExtraParamsForReportEvents";
     onTraceEventBegin(eventName);
@@ -688,7 +695,8 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
             || LynxEnv.inst().enableVSyncAlignedMessageLoopGlobal(),
         mLynxViewBuilder.enableAsyncHydration, mGroup != null && mGroup.enableJSGroupThread(),
         getJSGroupThreadNameIfNeed(), new TasmPlatformInvoker(mNativeFacade), whiteBoardPtr,
-        lynxUIRenderer.getUIDelegatePtr(), lynxUIRenderer.useInvokeUIMethod());
+        lynxUIRenderer.getUIDelegatePtr(), lynxUIRenderer.useInvokeUIMethod(),
+        mLongTaskMonitorEnabled.ordinal());
     lynxUIRenderer.attachNativeFacade(mNativeFacade);
     mNativeLifecycle = nativeLifecycleCreate();
     mCleanupReference = new CleanupReference(this, new CleanupOnUiThread(mNativeLifecycle), true);
@@ -3342,7 +3350,7 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
       boolean enablePreUpdateData, boolean enableAutoConcurrency,
       boolean enableVSyncAlignedMessageLoop, boolean enableAsyncHydration,
       boolean enableJSGroupThread, String jsGroupThreadName, Object tasmPlatformInvoker,
-      long whiteboard, long uiDelegate, boolean useInvokeUIMethod);
+      long whiteboard, long uiDelegate, boolean useInvokeUIMethod, int longTaskMonitorEnabled);
 
   private static native void nativeDestroy(long ptr);
 
@@ -3504,6 +3512,9 @@ public class LynxTemplateRender implements ILynxEngine, ILynxErrorReceiver {
   private native JavaOnlyMap nativeGetAllTimingInfo(long ptr, long lifecycle);
 
   private native void nativeClearAllTimingInfo(long ptr, long lifecycle);
+
+  private native void nativeSetLongTaskMonitorEnabled(
+      long ptr, long lifecycle, long enabledBySampling);
 
   private native void nativeSetSessionStorageItem(
       long ptr, long lifecycle, String key, long value, boolean readonly);

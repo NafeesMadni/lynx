@@ -26,7 +26,7 @@ class LynxUIOperationAsyncQueue
   explicit LynxUIOperationAsyncQueue(
       fml::RefPtr<fml::TaskRunner> runner,
       int32_t instance_id = tasm::report::kUnknownInstanceId)
-      : LynxUIOperationQueue(instance_id), runner_(std::move(runner)){};
+      : LynxUIOperationQueue(instance_id), runner_(std::move(runner)) {}
   virtual void EnqueueUIOperation(UIOperation operation) override;
   virtual void EnqueueHighPriorityOperation(UIOperation operation) override;
 

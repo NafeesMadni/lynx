@@ -78,7 +78,8 @@ void JSExecutor::invokeCallback(std::shared_ptr<piper::ModuleCallback> callback,
 
 std::shared_ptr<piper::App> JSExecutor::createNativeAppInstance(
     int64_t rt_id, runtime::TemplateDelegate* delegate,
-    std::unique_ptr<lynx::runtime::LynxApiHandler> api_handler) {
+    std::unique_ptr<lynx::runtime::LynxApiHandler> api_handler,
+    std::optional<bool> long_task_monitor_enabled) {
   Scope scope(*js_runtime_);
   piper::Object nativeModuleProxy = piper::Object::createFromHostObject(
       *js_runtime_, module_manager_.get()->bindingPtr);
@@ -101,7 +102,8 @@ std::shared_ptr<piper::App> JSExecutor::createNativeAppInstance(
   BodyNative::RegisterBodyNative(*js_runtime_);
   return piper::App::Create(rt_id, js_runtime_, delegate, exception_handler_,
                             std::move(nativeModuleProxy),
-                            std::move(api_handler), group_id_);
+                            std::move(api_handler), group_id_,
+                            long_task_monitor_enabled);
 }
 
 piper::JSRuntimeCreatedType JSExecutor::getJSRuntimeType() {

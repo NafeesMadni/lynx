@@ -65,6 +65,9 @@ class LynxShellBuilder {
 
   LynxShellBuilder& SetEnableLayoutOnly(bool enable_layout_only);
 
+  LynxShellBuilder& SetLongTaskMonitorEnabled(
+      std::optional<bool> long_task_monitor_enabled);
+
   LynxShellBuilder& SetTasmLocale(const std::string& locale);
 
   LynxShellBuilder& SetLayoutContextPlatformImpl(
@@ -129,6 +132,8 @@ class LynxShellBuilder {
   bool enable_layout_only_{true};
   bool enable_pre_update_data_{false};
   bool enable_diff_without_layout_{false};
+  std::optional<bool> long_task_monitor_enabled_{std::nullopt};
+
   std::string locale_;
 
   std::function<std::unique_ptr<shell::LynxEngine>(

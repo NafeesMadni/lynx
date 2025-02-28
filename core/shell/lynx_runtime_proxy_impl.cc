@@ -38,8 +38,9 @@ void LynxRuntimeProxyImpl::CallJSFunction(std::string module_id,
       piper::Scope scope(*js_runtime);
 
       // Timing
+      auto long_task_monitor_enabled = runtime->GetLongTaskMonitorEnabled();
       tasm::timing::LongTaskMonitor::Scope long_task_scope(
-          instance_id, tasm::timing::kJSFuncTask,
+          instance_id, long_task_monitor_enabled, tasm::timing::kJSFuncTask,
           tasm::timing::kTaskNameJSProxyCallJSFunction);
       std::string first_arg_str;
       if (params->Length() > 0) {

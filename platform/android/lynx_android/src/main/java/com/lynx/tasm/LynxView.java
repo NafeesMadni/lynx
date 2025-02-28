@@ -193,6 +193,22 @@ public class LynxView extends UIBodyView {
   }
 
   /**
+   * Set whether to enable long task monitor.
+   *
+   * @param enabled Whether to enable long task monitor.
+   * Pass LynxBooleanOption.Unset to use the default behavior, i.e. the env value
+   * of `enable_long_task_timing`(injected via the LynxTrailService).
+   * Pass LynxBooleanOption.True to enable long task monitor.
+   * Pass LynxBooleanOption.False to disable long task monitor.
+   *
+   * @note This method is only effective when PageConfig is not configured with
+   * kEnableLongTaskTiming.
+   */
+  public void setLongTaskMonitorEnabled(LynxBooleanOption enabled) {
+    mLynxTemplateRender.setLongTaskMonitorEnabled(enabled);
+  }
+
+  /**
    * Put parameters for reporting events, overriding old values if the parameters already exist.
    * @param params common parameters for report events, these values will be merged with params of
    *     EventReporter.onEvent.

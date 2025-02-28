@@ -8,6 +8,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -467,6 +468,14 @@ class ElementManager {
       return config_->GetEnableStandardCSSSelector();
     }
     return false;
+  }
+
+  void SetLongTaskMonitorEnabled(std::optional<bool> enable) {
+    long_task_monitor_enabled_ = enable;
+  }
+
+  std::optional<bool> GetLongTaskMonitorEnabled() {
+    return long_task_monitor_enabled_;
   }
 
   void SetEnableLayoutOnly(bool enable) { enable_layout_only_ = enable; }
@@ -1121,6 +1130,8 @@ class ElementManager {
   bool need_layout_{false};
   // Current thread strategy
   int thread_strategy_;
+
+  std::optional<bool> long_task_monitor_enabled_;
 
   // Enable new animator for current lynx view by default for radon/fiber, the
   // initial values here are defined to show the default values and serve as a

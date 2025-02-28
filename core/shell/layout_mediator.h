@@ -70,13 +70,19 @@ class LayoutMediator : public tasm::LayoutContext::Delegate,
     enable_air_strict_mode_ = enable_air_strict_mode;
   }
 
+  void SetLongTaskMonitorEnabled(
+      std::optional<bool> long_task_monitor_enabled) {
+    long_task_monitor_enabled_ = long_task_monitor_enabled;
+  }
+
   static void HandleLayoutVoluntarily(TASMOperationQueue *queue,
-                                      tasm::Catalyzer *catalyzer);
+                                      tasm::Catalyzer *catalyzer,
+                                      std::optional<bool> long_task_enabled);
 
  private:
   static void HandlePendingLayoutTask(
       TASMOperationQueue *queue, tasm::Catalyzer *catalyzer,
-      tasm::PipelineOptions option,
+      tasm::PipelineOptions option, std::optional<bool> long_task_enabled,
       const std::vector<TASMOperationQueue::TASMOperationWrapper> *operations =
           nullptr);
   static void HandleListOrComponentUpdated(
@@ -102,6 +108,7 @@ class LayoutMediator : public tasm::LayoutContext::Delegate,
   // but it may be triggered when update data...
   bool has_first_layout_{false};
   bool enable_air_strict_mode_{false};
+  std::optional<bool> long_task_monitor_enabled_;
 };
 
 }  // namespace shell

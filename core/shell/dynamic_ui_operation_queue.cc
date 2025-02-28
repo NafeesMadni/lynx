@@ -78,6 +78,11 @@ void DynamicUIOperationQueue::SetErrorCallback(ErrorCallback callback) {
   impl_->SetErrorCallback(std::move(callback));
 }
 
+void DynamicUIOperationQueue::SetLongTaskMonitorEnabled(
+    std::optional<bool> enabled) {
+  impl_->SetLongTaskMonitorEnabled(enabled);
+}
+
 uint32_t DynamicUIOperationQueue::GetNativeUpdateDataOrder() {
   return impl_->GetNativeUpdateDataOrder();
 }

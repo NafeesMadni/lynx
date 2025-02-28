@@ -58,7 +58,8 @@ class BASE_EXPORT_FOR_DEVTOOL JSExecutor {
 
   std::shared_ptr<piper::App> createNativeAppInstance(
       int64_t rt_id, runtime::TemplateDelegate*,
-      std::unique_ptr<lynx::runtime::LynxApiHandler> api_handler);
+      std::unique_ptr<lynx::runtime::LynxApiHandler> api_handler,
+      std::optional<bool> long_task_monitor_enabled);
 
   piper::JSRuntimeCreatedType getJSRuntimeType();
 

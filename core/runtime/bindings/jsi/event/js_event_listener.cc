@@ -39,8 +39,11 @@ void JSClosureEventListener::Invoke(event::Event* event) {
     return;
   }
   int32_t instance_id = static_cast<int32_t>(rt->getRuntimeId());
+  auto app = native_app_.lock();
+  auto long_task_monitor_enabled =
+      app ? app->GetLongTaskMonitorEnabled() : std::nullopt;
   tasm::timing::LongTaskMonitor::Scope long_task_scope(
-      instance_id, tasm::timing::kJSFuncTask,
+      instance_id, long_task_monitor_enabled, tasm::timing::kJSFuncTask,
       tasm::timing::kTaskNameJSEventListenerInvoke,
       event ? event->type() : "null");
   piper::Scope scope(*rt);

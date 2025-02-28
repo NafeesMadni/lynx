@@ -24,7 +24,8 @@ ElementVsyncProxy::ElementVsyncProxy(
 
 void ElementVsyncProxy::TickAllElement(fml::TimePoint &frame_time) {
   timing::LongTaskMonitor::Scope longTaskScope(
-      element_manager_->GetInstanceId(), timing::kAnimationTask,
+      element_manager_->GetInstanceId(),
+      element_manager_->GetLongTaskMonitorEnabled(), timing::kAnimationTask,
       timing::kTaskNameAnimationVSyncTickAllElement);
   // preferred_fps_ here won't be zero.
   if (preferred_fps_ == kPreferredFpsLow) {

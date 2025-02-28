@@ -38,12 +38,15 @@ uint32_t LepusLynx::SetTimeout(std::unique_ptr<NapiFuncCallback> callback,
               instance_id);
   EnsureTimeTaskInvoker();
   auto callback_id = task_handler_->StoreTimedTask(std::move(callback));
+  auto long_task_monitor_enabled =
+      tasm_ != nullptr ? tasm_->GetLongTaskMonitorEnabled() : std::nullopt;
   auto task_id = timer_->SetTimeout(
-      fml::MakeCopyable([env = NapiEnv(), callback_id, this, instance_id]() {
+      fml::MakeCopyable([env = NapiEnv(), callback_id, this, instance_id,
+                         long_task_monitor_enabled]() {
         TRACE_EVENT("lynx", "MainThread::InvokeSetTimeoutTask", "instance_id",
                     instance_id);
         tasm::timing::LongTaskMonitor::Scope long_task_scope(
-            instance_id, tasm::timing::kTimerTask,
+            instance_id, long_task_monitor_enabled, tasm::timing::kTimerTask,
             tasm::timing::kTaskNameLepusLynxSetTimeout);
         task_handler_->InvokeWithTimedTaskID(callback_id,
                                              Napi::Object::New(env), tasm_);
@@ -65,12 +68,14 @@ uint32_t LepusLynx::SetInterval(std::unique_ptr<NapiFuncCallback> callback,
               instance_id);
   EnsureTimeTaskInvoker();
   auto callback_id = task_handler_->StoreTimedTask(std::move(callback));
+  auto long_task_monitor_enabled =
+      tasm_ != nullptr ? tasm_->GetLongTaskMonitorEnabled() : std::nullopt;
   auto task_id = timer_->SetInterval(
-      [callback_id, this, instance_id]() {
+      [callback_id, this, instance_id, long_task_monitor_enabled]() {
         TRACE_EVENT("lynx", "MainThread::InvokeSetIntervalTask", "instance_id",
                     instance_id);
         tasm::timing::LongTaskMonitor::Scope long_task_scope(
-            instance_id, tasm::timing::kTimerTask,
+            instance_id, long_task_monitor_enabled, tasm::timing::kTimerTask,
             tasm::timing::kTaskNameLepusLynxSetInterval);
         task_handler_->InvokeWithTimedTaskID(
             callback_id, Napi::Object::New(NapiEnv()), tasm_);

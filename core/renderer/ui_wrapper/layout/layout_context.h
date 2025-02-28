@@ -77,7 +77,8 @@ class LayoutContext : public std::enable_shared_from_this<LayoutContext>,
 
   LayoutContext(std::unique_ptr<Delegate> delegate,
                 std::unique_ptr<LayoutCtxPlatformImpl> platform_impl,
-                const LynxEnvConfig& lynx_env_config, int32_t instance_id);
+                const LynxEnvConfig& lynx_env_config, int32_t instance_id,
+                std::optional<bool> long_task_monitor_enabled);
   virtual ~LayoutContext();
 
   // used for platform
@@ -137,6 +138,9 @@ class LayoutContext : public std::enable_shared_from_this<LayoutContext>,
   void MarkDirty(int32_t id);
   void DispatchLayoutUpdates(const PipelineOptions& options);
   void SetPageConfigForLayoutThread(const std::shared_ptr<PageConfig>& config);
+  void SetLongTaskMonitorEnabled(std::optional<bool> enabled) {
+    long_task_monitor_enabled_ = enabled;
+  }
 
   void SetEnableLayout();
 
@@ -279,6 +283,8 @@ class LayoutContext : public std::enable_shared_from_this<LayoutContext>,
   std::shared_ptr<PageConfig> page_config_;
   LynxEnvConfig lynx_env_config_;
   const int32_t instance_id_ = 0;
+  std::optional<bool> long_task_monitor_enabled_;
+
 #if ENABLE_TESTBENCH_RECORDER
   int64_t record_id_;
 #endif

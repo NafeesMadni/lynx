@@ -108,6 +108,12 @@ LynxShellBuilder& LynxShellBuilder::SetEnableLayoutOnly(
   return *this;
 }
 
+LynxShellBuilder& LynxShellBuilder::SetLongTaskMonitorEnabled(
+    std::optional<bool> long_task_monitor_enabled) {
+  this->long_task_monitor_enabled_ = long_task_monitor_enabled;
+  return *this;
+}
+
 LynxShellBuilder& LynxShellBuilder::SetTasmLocale(const std::string& locale) {
   this->locale_ = locale;
   return *this;
@@ -225,6 +231,7 @@ LynxShell* LynxShellBuilder::build() {
         shell->tasm_operation_queue_);
   }
 
+  layout_mediator->SetLongTaskMonitorEnabled(long_task_monitor_enabled_);
   shell->layout_mediator_ = layout_mediator.get();
   if (layout_context_) {
     layout_context_->SetLynxShell(shell);
@@ -232,7 +239,8 @@ LynxShell* LynxShellBuilder::build() {
   shell->layout_actor_ = std::make_shared<LynxActor<tasm::LayoutContext>>(
       std::make_unique<lynx::tasm::LayoutContext>(
           std::move(layout_mediator), std::move(this->layout_context_),
-          this->lynx_env_config_, shell->instance_id_),
+          this->lynx_env_config_, shell->instance_id_,
+          long_task_monitor_enabled_),
       shell->runners_.GetLayoutTaskRunner(), shell->instance_id_);
 
   TRACE_EVENT_BEGIN(LYNX_TRACE_CATEGORY,

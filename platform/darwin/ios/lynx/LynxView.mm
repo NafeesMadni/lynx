@@ -843,6 +843,10 @@
   [_templateRender setExtraTiming:timingInfo];
 }
 
+- (void)setLongTaskMonitorEnabled:(LynxBooleanOption)enabledBySampling {
+  [_templateRender setLongTaskMonitorEnabled:enabledBySampling];
+}
+
 - (void)putParamsForReportingEvents:(NSDictionary<NSString*, id>*)params {
   [_templateRender putExtraParamsForReportingEvents:params];
 }

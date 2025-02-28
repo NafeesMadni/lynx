@@ -54,6 +54,9 @@ class LynxUIOperationQueue {
   void SetErrorCallback(ErrorCallback callback) {
     error_callback_ = std::move(callback);
   };
+  void SetLongTaskMonitorEnabled(std::optional<bool> enabled) {
+    long_task_monitor_enabled_ = enabled;
+  }
   virtual uint32_t GetNativeUpdateDataOrder() { return 0; }
   virtual uint32_t UpdateNativeUpdateDataOrder() { return 0; }
   virtual bool IsInFlush() { return false; }
@@ -70,7 +73,8 @@ class LynxUIOperationQueue {
   std::atomic_bool destroyed_{false};
   bool enable_flush_{true};
   ErrorCallback error_callback_;
-  int32_t instance_id_;
+  const int32_t instance_id_;
+  std::optional<bool> long_task_monitor_enabled_;
 };
 
 }  // namespace shell

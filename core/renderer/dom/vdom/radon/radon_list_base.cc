@@ -202,8 +202,9 @@ void RadonListBase::RenderComponentAtIndex(uint32_t index,
               [this](lynx::perfetto::EventContext ctx) {
                 UpdateTraceDebugInfo(ctx.event());
               });
+  auto enabled_for_instance = tasm_->GetLongTaskMonitorEnabled();
   tasm::timing::LongTaskMonitor::Scope longTaskScope(
-      tasm_->GetInstanceId(), tasm::timing::kListNodeTask,
+      tasm_->GetInstanceId(), enabled_for_instance, tasm::timing::kListNodeTask,
       tasm::timing::kTaskNameRadonListBaseRenderAtIndex);
   DCHECK(index < platform_info_.components_.size());
   auto* comp = CreateComponentWithType(index);
@@ -280,8 +281,10 @@ void RadonListBase::UpdateComponent(uint32_t sign, uint32_t row,
     LOGE("comp is nullptr in RadonListBase::UpdateComponent.");
     return;
   }
+  auto enabled_for_instance =
+      tasm_ != nullptr ? tasm_->GetLongTaskMonitorEnabled() : std::nullopt;
   tasm::timing::LongTaskMonitor::Scope longTaskScope(
-      tasm_->GetInstanceId(), tasm::timing::kListNodeTask,
+      tasm_->GetInstanceId(), enabled_for_instance, tasm::timing::kListNodeTask,
       tasm::timing::kTaskNameRadonListBaseUpdateComponent);
   SyncComponentExtraInfo(comp, row, operation_id);
 

@@ -384,8 +384,10 @@ int32_t RadonDiffListNode2::ComponentAtIndex(uint32_t index,
   }
   int32_t instance_id = tasm_ == nullptr ? tasm::report::kUnknownInstanceId
                                          : tasm_->GetInstanceId();
+  auto enabled_for_instance =
+      tasm_ != nullptr ? tasm_->GetLongTaskMonitorEnabled() : std::nullopt;
   tasm::timing::LongTaskMonitor::Scope longTaskScope(
-      instance_id, tasm::timing::kListNodeTask,
+      instance_id, enabled_for_instance, tasm::timing::kListNodeTask,
       tasm::timing::kTaskNameRadonDiffListNode2ComponentAtIndex);
   // try to get reuse_identifier and item_key.
   ListComponentInfo& component_info = *components_[index];

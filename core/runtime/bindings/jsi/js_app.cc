@@ -66,6 +66,15 @@ inline std::unordered_map<std::string, JsContent>& GetJSAssetsMap() {
   return *js_assets_map_;
 }
 
+inline std::optional<bool> GetLongTaskMonitorEnabled(
+    std::weak_ptr<App> native_app) {
+  auto app = native_app.lock();
+  if (!app) {
+    return std::nullopt;
+  }
+  return app->GetLongTaskMonitorEnabled();
+}
+
 // default resource loader timeout is 5 seconds.
 constexpr long DEFAULT_RESOURCE_TIMEOUT = 5;
 
@@ -233,8 +242,11 @@ Value AppProxy::get(Runtime* rt, const PropNameID& name) {
                size_t count) -> base::expected<Value, JSINativeException> {
           TRACE_EVENT(LYNX_TRACE_CATEGORY, "updateData");
           int32_t instance_id = static_cast<int32_t>(rt.getRuntimeId());
+          auto long_task_monitor_enabled =
+              GetLongTaskMonitorEnabled(native_app_);
           tasm::timing::LongTaskMonitor::Scope long_task_scope(
-              instance_id, tasm::timing::kUpdateDataByJSTask,
+              instance_id, long_task_monitor_enabled,
+              tasm::timing::kUpdateDataByJSTask,
               tasm::timing::kTaskNameJSAppUpdateData);
           if (count < 1) {
             return base::unexpected(
@@ -295,8 +307,11 @@ Value AppProxy::get(Runtime* rt, const PropNameID& name) {
                const piper::Value* args,
                size_t count) -> base::expected<Value, JSINativeException> {
           int32_t instance_id = static_cast<int32_t>(rt.getRuntimeId());
+          auto long_task_monitor_enabled =
+              GetLongTaskMonitorEnabled(native_app_);
           tasm::timing::LongTaskMonitor::Scope long_task_scope(
-              instance_id, tasm::timing::kUpdateDataByJSTask,
+              instance_id, long_task_monitor_enabled,
+              tasm::timing::kUpdateDataByJSTask,
               tasm::timing::kTaskNameJSAppBatchedUpdateData);
           if (count < 1) {
             return base::unexpected(BUILD_JSI_NATIVE_EXCEPTION(
@@ -552,8 +567,11 @@ Value AppProxy::get(Runtime* rt, const PropNameID& name) {
             return piper::Value::undefined();
           }
           int32_t instance_id = static_cast<int32_t>(rt.getRuntimeId());
+          auto long_task_monitor_enabled =
+              GetLongTaskMonitorEnabled(native_app_);
           tasm::timing::LongTaskMonitor::Scope long_task_scope(
-              instance_id, tasm::timing::kUpdateDataByJSTask,
+              instance_id, long_task_monitor_enabled,
+              tasm::timing::kUpdateDataByJSTask,
               tasm::timing::kTaskNameJSAppUpdateComponentData);
           std::string id;
           if (args[0].isString()) {
@@ -1068,8 +1086,10 @@ Value AppProxy::get(Runtime* rt, const PropNameID& name) {
             return piper::Value::undefined();
           }
           int32_t instance_id = static_cast<int32_t>(rt.getRuntimeId());
+          auto long_task_monitor_enabled =
+              GetLongTaskMonitorEnabled(native_app_);
           tasm::timing::LongTaskMonitor::Scope long_task_scope(
-              instance_id, tasm::timing::kJSFuncTask,
+              instance_id, long_task_monitor_enabled, tasm::timing::kJSFuncTask,
               tasm::timing::kTaskNameJSAppCallLepusMethod);
 
           std::string method_name;
@@ -2109,8 +2129,9 @@ std::optional<Value> App::SendPageEvent(const std::string& page_name,
   auto rt = rt_.lock();
   if (rt && IsJsAppStateValid()) {
     int32_t instance_id = static_cast<int32_t>(rt->getRuntimeId());
+    auto long_task_monitor_enabled = GetLongTaskMonitorEnabled();
     tasm::timing::LongTaskMonitor::Scope long_task_scope(
-        instance_id, tasm::timing::kJSFuncTask,
+        instance_id, long_task_monitor_enabled, tasm::timing::kJSFuncTask,
         tasm::timing::kTaskNameJSAppSendPageEvent, handler);
     TRACE_EVENT(LYNX_TRACE_CATEGORY, "SendPageEvent",
                 [&](lynx::perfetto::EventContext ctx) {
@@ -2953,8 +2974,10 @@ std::optional<Value> App::PublishComponentEvent(const std::string& component_id,
   auto rt = rt_.lock();
   if (rt && IsJsAppStateValid() && card_bundle_.support_component_js) {
     int32_t instance_id = static_cast<int32_t>(rt->getRuntimeId());
+    auto long_task_monitor_enabled = GetLongTaskMonitorEnabled();
     tasm::timing::LongTaskMonitor::Scope long_task_scope(
-        instance_id, tasm::timing::kUpdateTriggeredByBts,
+        instance_id, long_task_monitor_enabled,
+        tasm::timing::kUpdateTriggeredByBts,
         tasm::timing::kTaskNameJSAppPublishComponentEvent, handler);
     Scope scope(*rt);
     Object js_app = js_app_.getObject(*rt);
@@ -3435,6 +3458,11 @@ void App::ResumeAnimationFrame() {
 void App::SetJsBundleHolder(
     const std::weak_ptr<piper::JsBundleHolder>& holder) {
   weak_js_bundle_holder_ = holder;
+}
+
+void App::SetLongTaskMonitorEnabled(std::optional<bool> enabled) {
+  long_task_monitor_enabled_ = enabled;
+  js_task_adapter_->SetLongTaskMonitorEnabled(enabled);
 }
 
 }  // namespace piper

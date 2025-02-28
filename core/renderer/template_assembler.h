@@ -696,6 +696,15 @@ class TemplateAssembler final
   }
   void SetDefaultLepusNG(bool value) { default_use_lepus_ng_ = value; }
 
+  void SetLongTaskMonitorEnabled(std::optional<bool> enabled) {
+    long_task_monitor_enabled_ = enabled;
+    page_proxy_.element_manager()->SetLongTaskMonitorEnabled(enabled);
+  }
+
+  std::optional<bool> GetLongTaskMonitorEnabled() const {
+    return page_proxy_.element_manager()->GetLongTaskMonitorEnabled();
+  }
+
  private:
   friend class TemplateBinaryReader;
   friend class TemplateBinaryReaderSSR;
@@ -863,6 +872,8 @@ class TemplateAssembler final
 
   std::shared_ptr<LazyBundleLoader> component_loader_;
   std::string locale_;
+
+  std::optional<bool> long_task_monitor_enabled_;
 
   TemplateAssembler(const TemplateAssembler&) = delete;
   TemplateAssembler& operator=(const TemplateAssembler&) = delete;
