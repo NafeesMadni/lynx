@@ -101,7 +101,9 @@ class ComputedCSSStyle {
         physical_pixels_per_layout_unit);
   }
 
-  const tasm::CssMeasureContext& GetMeasureContext() { return length_context_; }
+  const tasm::CssMeasureContext& GetMeasureContext() const {
+    return length_context_;
+  }
 
   void Reset();
   void ResetValue(tasm::CSSPropertyID id);
@@ -159,6 +161,10 @@ class ComputedCSSStyle {
 
   void SetCSSParserConfigs(const tasm::CSSParserConfigs& configs) {
     parser_configs_ = configs;
+  }
+
+  const tasm::CSSParserConfigs& ParserConfigs() const {
+    return parser_configs_;
   }
 
   int GetZIndex() const { return z_index_; }
@@ -256,16 +262,9 @@ class ComputedCSSStyle {
 
   void ResetOverflow();
 
-// style setter by CSSValue
-#define SET_WITH_CSS_VALUE(name, css_name, default_value) \
-  bool Set##name(const tasm::CSSValue& value, const bool reset = false);
-  FOREACH_ALL_PROPERTY(SET_WITH_CSS_VALUE)
-#undef SET_WITH_CSS_VALUE
-
 // platform style getter
 #define FOREACH_PLATFORM_PROPERTY(V)     \
   V(Opacity)                             \
-  V(Position)                            \
   V(Overflow)                            \
   V(OverflowX)                           \
   V(OverflowY)                           \
@@ -373,6 +372,13 @@ class ComputedCSSStyle {
   V(XAppRegion)                          \
   V(XHandleSize)                         \
   V(XHandleColor)
+
+  // style setter by CSSValue
+#define SET_WITH_CSS_VALUE(name, css_name, default_value) \
+  bool Set##name(const tasm::CSSValue& value, const bool reset = false);
+  FOREACH_PLATFORM_PROPERTY(SET_WITH_CSS_VALUE)
+#undef SET_WITH_CSS_VALUE
+
 #define GETTER_STYLE_STRING(name) lepus_value name##ToLepus();
   FOREACH_PLATFORM_PROPERTY(GETTER_STYLE_STRING)
 #undef GET_WITH_STRING
@@ -387,6 +393,10 @@ class ComputedCSSStyle {
   bool Inherit##name(const ComputedCSSStyle& from);
   FOREACH_PLATFORM_COMPLEX_INHERITABLE_PROPERTY(INHERIT_CSS_VALUE)
 #undef INHERIT_CSS_VALUE
+
+  // No need to push to bundle.
+  bool SetXAnimationColorInterpolation(const tasm::CSSValue& value,
+                                       const bool reset);
 
  private:
   float GetBorderFinalWidth(float width, BorderStyleType style) const {

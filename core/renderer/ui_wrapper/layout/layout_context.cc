@@ -455,8 +455,9 @@ LayoutNode* LayoutContext::CreateLayoutNode(int32_t id,
   LayoutNode* layoutNode =
       &layout_nodes_
            .emplace(std::piecewise_construct, std::forward_as_tuple(id),
-                    std::forward_as_tuple(id, layout_configs, lynx_env_config_,
-                                          *init_css_style_))
+                    std::forward_as_tuple(
+                        id, layout_configs, lynx_env_config_,
+                        *init_css_style_->GetConstLayoutComputedStyle()))
            .first->second;
   layoutNode->SetTag(tag);
   if (tag.str() == kListNodeTag) {
