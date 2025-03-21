@@ -137,6 +137,142 @@ lepus::Value GetSystemInfoFromTasm(TemplateAssembler* tasm) {
   return GenerateSystemInfo(&config);
 }
 
+bool SetElementProperties(lepus::Context* ctx,
+                          const fml::RefPtr<FiberElement>& element,
+                          lepus::Value* props, lepus::Value* options) {
+  if (!props->IsArrayOrJSArray()) {
+    RenderWarning("param_bundle needs to be array.");
+    return false;
+  }
+  if (props->Array()->size() == 7) {
+    // [0] String -> id
+    // [1] String -> tag
+    // [2] String -> class
+    // [3] Array -> event
+    // [4] Object -> style
+    // [5] Object -> attribute
+    // [6] Object  -> builtin attribute
+    if (props->GetProperty(0).IsString()) {
+      element->SetIdSelector(props->GetProperty(0).String());
+    } else {
+      RenderWarning("param_bundle[0] is id, need a String.");
+      return false;
+    }
+    if (!props->GetProperty(1).IsString()) {
+      RenderWarning("param_bundle[1] is tag, need a String.");
+      return false;
+    }
+    if (props->GetProperty(2).IsString()) {
+      element->OnClassChanged(element->classes(),
+                              {props->GetProperty(2).String()});
+      element->SetClass(props->String());
+    } else {
+      RenderWarning("param_bundle[2] is class, need a String.");
+      return false;
+    }
+    if (props->GetProperty(3).IsArrayOrJSArray()) {
+      auto callbacks = props->GetProperty(3);
+      element->RemoveAllEvents();
+
+      ForEachLepusValue(callbacks, [element, ctx](const lepus::Value& index,
+                                                  const lepus::Value& value) {
+        BASE_STATIC_STRING_DECL(kName, "name");
+        BASE_STATIC_STRING_DECL(kType, "type");
+        BASE_STATIC_STRING_DECL(kFunction, "function");
+
+        const auto& name = value.GetProperty(kName);
+        const auto& type = value.GetProperty(kType);
+        const auto& callback = value.GetProperty(kFunction);
+
+        if (!name.IsString()) {
+          LOGW("FiberSetEvents' "
+               << value.Number()
+               << " parameter must contain name, and name must be string.");
+        }
+        if (!type.IsString()) {
+          LOGW("FiberSetEvents' "
+               << value.Number()
+               << " parameter must contain type, and type must be string.");
+        }
+        if (callback.IsString()) {
+          element->SetJSEventHandler(name.String(), type.String(),
+                                     callback.String());
+        } else if (callback.IsCallable()) {
+          element->SetLepusEventHandler(name.String(), type.String(),
+                                        lepus::Value(), callback);
+        } else if (callback.IsObject()) {
+          BASE_STATIC_STRING_DECL(kValue, "value");
+
+          const auto& obj_type = callback.GetProperty(kType).String().str();
+          const auto& value = callback.GetProperty(kValue);
+          if (obj_type == tasm::kWorklet) {
+            // worklet event
+            element->SetWorkletEventHandler(name.String(), type.String(), value,
+                                            ctx);
+          }
+
+        } else {
+          LOGW("FiberSetEvents' " << value.Number()
+                                  << " parameter must contain callback, and "
+                                     "callback must be string or callable.");
+        }
+      });
+    } else {
+      RenderWarning("param_bundle[3] is event, need an Array.");
+    }
+
+    if (props->GetProperty(4).IsObject()) {
+      tasm::ForEachLepusValue(
+          props->GetProperty(4),
+          [&element](const lepus::Value& key, const lepus::Value& value) {
+            auto id = CSSProperty::GetPropertyID(
+                base::CamelCaseToDashCase(key.String().str()));
+            if (CSSProperty::IsPropertyValid(id)) {
+              element->SetStyle(id, value);
+            }
+          });
+    } else if (props->GetProperty(4).IsString()) {
+      // string style TBD.
+    } else {
+      RenderWarning("param_bundle[4] is style, need an Object or an Array.");
+      return false;
+    }
+
+    if (props->GetProperty(5).IsObject()) {
+      tasm::ForEachLepusValue(
+          props->GetProperty(5),
+          [&element](const lepus::Value& key, const lepus::Value& value) {
+            if (key.IsString()) {
+              element->SetAttribute(key.String(), value);
+            }
+          });
+    } else {
+      RenderWarning("param_bundle[5] is attribute, need an Object.");
+      return false;
+    }
+
+    if (props->GetProperty(6).IsObject()) {
+      tasm::ForEachLepusValue(
+          props->GetProperty(6),
+          [&element](const lepus::Value& key, const lepus::Value& value) {
+            if (key.IsNumber()) {
+              element->SetBuiltinAttribute(
+                  static_cast<ElementBuiltInAttributeEnum>(key.Number()),
+                  value);
+            }
+          });
+    } else {
+      RenderWarning("param_bundle[6] is builtin attribute, need an Object.");
+      return false;
+    }
+  };
+  if (!(options->IsNil() || options->IsObject())) {
+    RenderWarning("options need to be object.");
+    return false;
+  }
+  return true;
+}
+
 }  // namespace
 
 #define RENDERER_FUNCTION_CC(name)                          \
@@ -4885,6 +5021,20 @@ RENDERER_FUNCTION_CC(LoadLepusChunk) {
   RETURN(lepus::Value(is_success));
 }
 
+RENDERER_FUNCTION_CC(FiberCreateFrame) {
+  TRACE_EVENT(LYNX_TRACE_CATEGORY, "FiberCreateFrame");
+  CHECK_ARGC_GE(FiberCreateFrame, 2);
+  CONVERT_ARG(arg0, 0);
+  CONVERT_ARG(arg1, 1);
+  auto element =
+      GET_TASM_POINTER()->page_proxy()->element_manager()->CreateFiberFrame();
+  if (!SetElementProperties(LEPUS_CONTEXT(), element, arg0, arg1)) {
+    RETURN_UNDEFINED();
+  }
+  ON_NODE_CREATE(element);
+  RETURN(lepus::Value(std::move(element)));
+}
+
 RENDERER_FUNCTION_CC(FiberCreateElementWithProperties) {
   TRACE_EVENT(LYNX_TRACE_CATEGORY, "FiberCreateElementWithProperties");
   // parameter description
@@ -4915,136 +5065,9 @@ RENDERER_FUNCTION_CC(FiberCreateElementWithProperties) {
 
   // properties array
   CONVERT_ARG(arg1, 1);
-  if (!arg1->IsArrayOrJSArray()) {
-    RenderWarning("args[1] is param_bundle, need array.");
-    RETURN_UNDEFINED();
-  }
-  if (arg1->Array()->size() != 7) {
-    // [0] String -> id
-    // [1] String -> tag
-    // [2] String -> class
-    // [3] Array -> event
-    // [4] Object -> style
-    // [5] Object -> attribute
-    // [6] Object  -> builtin attribute
-    if (arg1->GetProperty(0).IsString()) {
-      element->SetIdSelector(arg1->GetProperty(0).String());
-    } else {
-      RenderWarning("param_bundle[0] is id, need a String.");
-      RETURN_UNDEFINED();
-    }
-    if (!arg1->GetProperty(1).IsString()) {
-      RenderWarning("param_bundle[1] is tag, need a String.");
-      RETURN_UNDEFINED();
-    }
-    if (arg1->GetProperty(2).IsString()) {
-      element->OnClassChanged(element->classes(),
-                              {arg1->GetProperty(2).String()});
-      element->SetClass(arg1->String());
-    } else {
-      RenderWarning("param_bundle[2] is class, need a String.");
-      RETURN_UNDEFINED();
-    }
-    if (arg1->GetProperty(3).IsArrayOrJSArray()) {
-      auto callbacks = arg1->GetProperty(3);
-      element->RemoveAllEvents();
-
-      ForEachLepusValue(callbacks, [element, LEPUS_CONTEXT()](
-                                       const lepus::Value& index,
-                                       const lepus::Value& value) {
-        BASE_STATIC_STRING_DECL(kName, "name");
-        BASE_STATIC_STRING_DECL(kType, "type");
-        BASE_STATIC_STRING_DECL(kFunction, "function");
-
-        const auto& name = value.GetProperty(kName);
-        const auto& type = value.GetProperty(kType);
-        const auto& callback = value.GetProperty(kFunction);
-
-        if (!name.IsString()) {
-          LOGW("FiberSetEvents' "
-               << value.Number()
-               << " parameter must contain name, and name must be string.");
-        }
-        if (!type.IsString()) {
-          LOGW("FiberSetEvents' "
-               << value.Number()
-               << " parameter must contain type, and type must be string.");
-        }
-        if (callback.IsString()) {
-          element->SetJSEventHandler(name.String(), type.String(),
-                                     callback.String());
-        } else if (callback.IsCallable()) {
-          element->SetLepusEventHandler(name.String(), type.String(),
-                                        lepus::Value(), callback);
-        } else if (callback.IsObject()) {
-          BASE_STATIC_STRING_DECL(kValue, "value");
-
-          const auto& obj_type = callback.GetProperty(kType).String().str();
-          const auto& value = callback.GetProperty(kValue);
-          if (obj_type == tasm::kWorklet) {
-            // worklet event
-            element->SetWorkletEventHandler(name.String(), type.String(), value,
-                                            LEPUS_CONTEXT());
-          }
-
-        } else {
-          LOGW("FiberSetEvents' " << value.Number()
-                                  << " parameter must contain callback, and "
-                                     "callback must be string or callable.");
-        }
-      });
-    } else {
-      RenderWarning("param_bundle[3] is event, need an Array.");
-    }
-
-    if (arg1->GetProperty(4).IsObject()) {
-      tasm::ForEachLepusValue(
-          arg1->GetProperty(4),
-          [&element](const lepus::Value& key, const lepus::Value& value) {
-            auto id = CSSProperty::GetPropertyID(
-                base::CamelCaseToDashCase(key.String().str()));
-            if (CSSProperty::IsPropertyValid(id)) {
-              element->SetStyle(id, value);
-            }
-          });
-    } else if (arg1->GetProperty(4).IsString()) {
-      // string style TBD.
-    } else {
-      RenderWarning("param_bundle[4] is style, need an Object or an Array.");
-      RETURN_UNDEFINED();
-    }
-
-    if (arg1->GetProperty(5).IsObject()) {
-      tasm::ForEachLepusValue(
-          arg1->GetProperty(5),
-          [&element](const lepus::Value& key, const lepus::Value& value) {
-            if (key.IsString()) {
-              element->SetAttribute(key.String(), value);
-            }
-          });
-    } else {
-      RenderWarning("param_bundle[5] is attribute, need an Object.");
-      RETURN_UNDEFINED();
-    }
-
-    if (arg1->GetProperty(6).IsObject()) {
-      tasm::ForEachLepusValue(
-          arg1->GetProperty(6),
-          [&element](const lepus::Value& key, const lepus::Value& value) {
-            if (key.IsNumber()) {
-              element->SetBuiltinAttribute(
-                  static_cast<ElementBuiltInAttributeEnum>(key.Number()),
-                  value);
-            }
-          });
-    } else {
-      RenderWarning("param_bundle[6] is builtin attribute, need an Object.");
-      RETURN_UNDEFINED();
-    }
-  }
+  // options
   CONVERT_ARG(arg2, 2);
-  if (!arg2->IsObject()) {
-    RenderWarning("args[2] is options, need object.");
+  if (!SetElementProperties(LEPUS_CONTEXT(), element, arg1, arg2)) {
     RETURN_UNDEFINED();
   }
 
