@@ -1098,6 +1098,11 @@ public abstract class LynxUI<T extends View> extends LynxBaseUI {
   }
 
   public void updatePerspectiveToView() {
+    if (mPerspective == mPrePerspective && mPreWidth == getWidth() && mPreHeight == getHeight()
+        && mPreContextHeight == mContext.getLynxView().getHeight()
+        && mPreContextWidth == mContext.getLynxView().getWidth()) {
+      return;
+    }
     float perspective = 0;
     float scale = mContext.getScreenMetrics().density;
     if (mPerspective != null && mPerspective.size() > 1
@@ -1127,6 +1132,11 @@ public abstract class LynxUI<T extends View> extends LynxBaseUI {
           maxLength * scale * CAMERA_DISTANCE_NORMALIZATION_MULTIPLIER * DEFAULT_PERSPECTIVE_FACTOR;
     }
     mView.setCameraDistance(perspective);
+    mPreContextHeight = mContext.getLynxView().getHeight();
+    mPreContextWidth = mContext.getLynxView().getWidth();
+    mPrePerspective = mPerspective;
+    mPreWidth = getWidth();
+    mPreHeight = getHeight();
   }
 
   @LynxProp(name = "clip-path")

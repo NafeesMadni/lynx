@@ -222,6 +222,11 @@ public abstract class LynxBaseUI
   protected List<TransformRaw> mTransformRaw;
   @Nullable protected TransformOrigin mTransformOrigin;
   @Nullable protected ReadableArray mPerspective = null;
+  @Nullable protected ReadableArray mPrePerspective = null;
+  protected int mPreWidth;
+  protected int mPreHeight;
+  protected int mPreContextWidth;
+  protected int mPreContextHeight;
   protected boolean hasTransformChanged = false;
   protected boolean userInteractionEnabled = true;
   protected boolean nativeInteractionEnabled = false;
